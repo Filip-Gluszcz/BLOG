@@ -26,10 +26,11 @@ class Post(models.Model):
     published = PublishedManager()
 
     def get_absolute_url(self):
-        return reverse('blog:post_detail', args=[self.publish.year, 
-                                                self.publish.strftime('%m'), 
-                                                self.publish.strftime('%d'), 
-                                                self.slug])
+        return reverse('blog:post_detail', 
+                        args=[self.publish.year, 
+                              self.publish.strftime('%m'), 
+                              self.publish.strftime('%d'), 
+                              self.slug])
     
     class Meta:
         ordering = ('-publish',)
