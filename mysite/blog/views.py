@@ -4,6 +4,8 @@ from django.core.mail import send_mail
 from django.views.generic import ListView
 from .models import Post, Comment
 from .froms import EmailPostForm, CommentForm
+from taggit.models import Tag
+from django.db.models import Count
 
 class PostListView(ListView):
     queryset = Post.published.all() # standardowo dodaje sie 'model = Post' ale wtedy widok wywołuje Post.objects.all() zamiast Post.published.all()
@@ -11,8 +13,13 @@ class PostListView(ListView):
     paginate_by: int = 3
     template_name: str = 'blog/post/list.html'
 
-def post_list(request):
+def post_list(request, tag_slug=None):
     object_list = Post.published.all()
+    tag = None
+
+    if tag_slug:
+        tag = get_object_or_404(Tag, slug=tag_slug)
+        object_list = object_list.filter(tag__in=[tag])
     paginator = Paginator(object_list, 3)
     page = request.GET.get('page')
 
@@ -26,7 +33,8 @@ def post_list(request):
     return render(request, 
                     'blog/post/list.html', 
                     {'page': page, 
-                    'posts': posts})
+                    'posts': posts,
+                    'tag': tag})
 
 def post_detail(request, year, month, day, post):
     post = get_object_or_404(Post, slug=post, 
@@ -36,6 +44,9 @@ def post_detail(request, year, month, day, post):
                                    publish__day=day)
     
     comments = post.comments.filter(active=True)
+    post_tag_ids = post.tag.values_list('id', flat=True) # flat=True powoduje zwrócenie listy wartości zamiast listy krotek wartośći
+    similar_posts = Post.published.filter(tag__in=post_tag_ids).exclude(id=post.id)
+    similar_posts = similar_posts.annotate(same_tags=Count('tag')).order_by('-same_tags', '-publish')[:4]
 
     if request.method == 'POST':
         comment_form = CommentForm(data=request.POST)
@@ -47,7 +58,9 @@ def post_detail(request, year, month, day, post):
 
     return render(request, 
                     'blog/post/detail.html', 
-                    {'post': post, 'comments': comments, 'comment_form': comment_form})
+                    {'post': post, 'comments': comments, 
+                     'comment_form': comment_form, 
+                     'similar_posts': similar_posts})
 
 def post_share(request, post_id):
     post = get_object_or_404(Post, id=post_id, status='published')

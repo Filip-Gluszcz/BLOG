@@ -38,3 +38,13 @@
         </form>
     {% endif %}
 {% endblock content %}
+{% block sidebar %}
+<h2>Podobne posty</h2>
+{% for post in similar_posts %}
+    <p>
+        <a href="{{ post.get_absolute_url }}">{{post.title}}</a>
+    </p>
+{% empty %}
+    Nie ma podobnych postów.
+{% endfor %}
+{% endblock sidebar %}
