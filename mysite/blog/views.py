@@ -76,7 +76,8 @@ def post_share(request, post_id):
             message = f'Przeczytaj post "{post.title}" na stronie {post_url}\n\n Komentarz dodany przez {email_form_clened_data["name"]}: {email_form_clened_data["comments"]}'
             send_mail(subject, message, 'blog.django.app@gmail.com', [email_form_clened_data['to'],])
             sent = True
-    else: form = EmailPostForm()
+    else: 
+        form = EmailPostForm()
     return render(request, 'blog/post/share.html', {'post': post, 'form': form, 'sent': sent})
 
 # def post_search(request):
